@@ -20,38 +20,33 @@ public class ClientController {
 
     @PostMapping
     public ResponseEntity<ClientResponseDTO> create(
-            @RequestBody @Valid ClientRequestDTO request) {
+            @Valid @RequestBody ClientRequestDTO request) {
 
-        ClientResponseDTO response = clientService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(clientService.create(request));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody @Valid ClientRequestDTO request) {
+            @Valid @RequestBody ClientRequestDTO request) {
 
-        ClientResponseDTO response = clientService.update(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clientService.update(id, request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> findById(@PathVariable Long id) {
-
-        ClientResponseDTO response = clientService.findById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clientService.findById(id));
     }
 
     @GetMapping
     public ResponseEntity<List<ClientResponseDTO>> findAll() {
-
-        List<ClientResponseDTO> response = clientService.findAll();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clientService.findAll());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
         clientService.delete(id);
         return ResponseEntity.noContent().build();
     }
