@@ -4,6 +4,7 @@ import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.BusinessException;
+import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
 import com.jonathanleite.clientapi.domain.service.ClientServiceImpl;
@@ -62,8 +63,10 @@ class ClientServiceImplTest {
 
         when(clientRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        assertThrows(BusinessException.class,
-                () -> clientService.create(request));
+        assertThrows(
+                ConflictException.class,
+                () -> clientService.create(request)
+        );
     }
 
     /* ===============================
