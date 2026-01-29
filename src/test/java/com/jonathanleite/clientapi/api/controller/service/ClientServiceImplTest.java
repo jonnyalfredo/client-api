@@ -1,4 +1,4 @@
-package domain.service;
+package com.jonathanleite.clientapi.api.controller.service;
 
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
