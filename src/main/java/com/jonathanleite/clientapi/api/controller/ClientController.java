@@ -41,8 +41,14 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ClientResponseDTO>> findAll(Pageable pageable) {
-        return ResponseEntity.ok(clientService.findAll(pageable));
+    public ResponseEntity<Page<ClientResponseDTO>> findAll(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String document,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(
+                clientService.findAll(email, document, pageable)
+        );
     }
 
     @DeleteMapping("/{id}")
