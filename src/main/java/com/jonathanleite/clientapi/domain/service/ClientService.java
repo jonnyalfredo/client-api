@@ -13,7 +13,11 @@ public interface ClientService {
 
     ClientResponseDTO findById(Long id);
 
-    Page<ClientResponseDTO> findAll(Pageable pageable);
+    Page<ClientResponseDTO> findAll(
+            String email,
+            String document,
+            Pageable pageable
+    );
 
     void delete(Long id);
 }
