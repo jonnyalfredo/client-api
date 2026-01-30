@@ -5,11 +5,11 @@ import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/clients")
@@ -41,8 +41,8 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientResponseDTO>> findAll() {
-        return ResponseEntity.ok(clientService.findAll());
+    public ResponseEntity<Page<ClientResponseDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(clientService.findAll(pageable));
     }
 
     @DeleteMapping("/{id}")
