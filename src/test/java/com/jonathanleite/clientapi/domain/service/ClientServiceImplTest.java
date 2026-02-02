@@ -1,159 +1,179 @@
 package com.jonathanleite.clientapi.domain.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jonathanleite.clientapi.api.controller.ClientController;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
-import com.jonathanleite.clientapi.domain.entity.Client;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
-import com.jonathanleite.clientapi.domain.repository.ClientRepository;
+import com.jonathanleite.clientapi.domain.service.ClientService;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
-class ClientServiceImplTest {
+@WebMvcTest(ClientController.class)
+class ClientControllerTest {
 
-    @Mock
-    private ClientRepository clientRepository;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @InjectMocks
-    private ClientServiceImpl clientService;
+    @MockBean
+    private ClientService clientService;
 
-    /* ===============================
-       CREATE
-       =============================== */
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    /* ---------- POST /clients ---------- */
 
     @Test
-    void shouldCreateClientSuccessfully() {
+    void shouldCreateClientSuccessfully() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
+                .email("teste@email.com")
+                .document("123")
+                .name("Jonathan")
+                .phone("11999999999")
+                .build();
+
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
                 .email("teste@email.com")
                 .document("123")
                 .build();
 
-        Client savedClient = Client.builder()
-                .id(1L)
-                .email(request.getEmail())
-                .document(request.getDocument())
-                .build();
+        when(clientService.create(any(ClientRequestDTO.class)))
+                .thenReturn(response);
 
-        when(clientRepository.existsByEmail(request.getEmail()))
-                .thenReturn(false);
-
-        when(clientRepository.save(any(Client.class)))
-                .thenReturn(savedClient);
-
-        ClientResponseDTO response = clientService.create(request);
-
-        assertNotNull(response);
-        assertEquals(savedClient.getId(), response.getId());
-        assertEquals(savedClient.getEmail(), response.getEmail());
+        mockMvc.perform(post("/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.email").value("teste@email.com"));
     }
 
     @Test
-    void shouldThrowExceptionWhenEmailAlreadyExists() {
+    void shouldReturn409WhenEmailAlreadyExists() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
                 .email("duplicado@email.com")
                 .document("123")
+                .name("Jonathan")
+                .phone("11999999999")
                 .build();
 
-        when(clientRepository.existsByEmail(request.getEmail()))
-                .thenReturn(true);
+        when(clientService.create(any(ClientRequestDTO.class)))
+                .thenThrow(new ConflictException("Email já cadastrado"));
 
-        assertThrows(
-                ConflictException.class,
-                () -> clientService.create(request)
-        );
-
-        verify(clientRepository, never()).save(any());
+        mockMvc.perform(post("/clients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Email já cadastrado"));
     }
 
-    /* ===============================
-       FIND BY ID
-       =============================== */
+    /* ---------- PUT /clients/{id} ---------- */
 
     @Test
-    void shouldFindClientByIdSuccessfully() {
-        Long id = 1L;
-
-        Client client = Client.builder()
-                .id(id)
-                .email("teste@email.com")
-                .document("123")
-                .build();
-
-        when(clientRepository.findById(id))
-                .thenReturn(Optional.of(client));
-
-        ClientResponseDTO response = clientService.findById(id);
-
-        assertNotNull(response);
-        assertEquals(id, response.getId());
-    }
-
-    @Test
-    void shouldThrowNotFoundWhenClientDoesNotExist() {
-        Long id = 1L;
-
-        when(clientRepository.findById(id))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> clientService.findById(id)
-        );
-    }
-
-    @Test
-    void shouldThrowNotFoundWhenUpdatingNonExistingClient() {
-        Long id = 1L;
-
+    void shouldUpdateClientSuccessfully() throws Exception {
         ClientRequestDTO request = ClientRequestDTO.builder()
+                .email("novo@email.com")
+                .document("456")
+                .name("Jonathan")
+                .phone("11999999999")
+                .build();
+
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
+                .email("novo@email.com")
+                .document("456")
+                .build();
+
+        when(clientService.update(eq(1L), any(ClientRequestDTO.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/clients/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("novo@email.com"));
+    }
+
+    /* ---------- GET /clients/{id} ---------- */
+
+    @Test
+    void shouldFindClientByIdSuccessfully() throws Exception {
+        ClientResponseDTO response = ClientResponseDTO.builder()
+                .id(1L)
                 .email("teste@email.com")
                 .document("123")
                 .build();
 
-        when(clientRepository.findById(id))
-                .thenReturn(Optional.empty());
+        when(clientService.findById(1L)).thenReturn(response);
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> clientService.update(id, request)
-        );
-    }
-
-    /* ===============================
-       FIND ALL
-       =============================== */
-
-    @Test
-    void shouldReturnListOfClients() {
-        Client client1 = Client.builder().id(1L).email("a@email.com").build();
-        Client client2 = Client.builder().id(2L).email("b@email.com").build();
-
-        when(clientRepository.findAll())
-                .thenReturn(List.of(client1, client2));
-
-        List<ClientResponseDTO> response = clientService.findAll();
-
-        assertEquals(2, response.size());
+        mockMvc.perform(get("/clients/{id}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
-    void shouldThrowNotFoundWhenDeletingNonExistingClient() {
-        Long id = 1L;
+    void shouldReturn404WhenClientNotFound() throws Exception {
+        when(clientService.findById(99L))
+                .thenThrow(new ResourceNotFoundException("Cliente não encontrado"));
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> clientService.delete(id)
+        mockMvc.perform(get("/clients/{id}", 99L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cliente não encontrado"));
+    }
+
+    /* ---------- GET /clients (PAGINADO) ---------- */
+
+    @Test
+    void shouldFindAllClientsSuccessfully() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<ClientResponseDTO> page = new PageImpl<>(
+                List.of(
+                        ClientResponseDTO.builder().id(1L).email("a@email.com").build(),
+                        ClientResponseDTO.builder().id(2L).email("b@email.com").build()
+                ),
+                pageable,
+                2
         );
+
+        when(clientService.findAll(
+                nullable(String.class),
+                nullable(String.class),
+                any(Pageable.class)
+        )).thenReturn(page);
+
+        mockMvc.perform(get("/clients")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2));
+    }
+
+    /* ---------- DELETE /clients/{id} ---------- */
+
+    @Test
+    void shouldDeleteClientSuccessfully() throws Exception {
+        doNothing().when(clientService).delete(1L);
+
+        mockMvc.perform(delete("/clients/{id}", 1L))
+                .andExpect(status().isNoContent());
     }
 }

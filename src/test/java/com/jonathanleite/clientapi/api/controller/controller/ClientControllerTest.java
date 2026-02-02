@@ -1,6 +1,7 @@
-package com.jonathanleite.clientapi.api.controller;
+package com.jonathanleite.clientapi.api.controller.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jonathanleite.clientapi.api.controller.ClientController;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
@@ -10,17 +11,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.data.domain.Pageable;
 
 @WebMvcTest(ClientController.class)
 class ClientControllerTest {
@@ -141,17 +145,31 @@ class ClientControllerTest {
 
     @Test
     void shouldFindAllClientsSuccessfully() throws Exception {
-        List<ClientResponseDTO> response = List.of(
-                ClientResponseDTO.builder().id(1L).email("a@email.com").build(),
-                ClientResponseDTO.builder().id(2L).email("b@email.com").build()
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<ClientResponseDTO> page = new PageImpl<>(
+                List.of(
+                        ClientResponseDTO.builder().id(1L).email("a@email.com").build(),
+                        ClientResponseDTO.builder().id(2L).email("b@email.com").build()
+                ),
+                pageable,
+                2
         );
 
-        when(clientService.findAll()).thenReturn(response);
+        when(clientService.findAll(
+                nullable(String.class),
+                nullable(String.class),
+                any(Pageable.class)
+        )).thenReturn(page);
 
-        mockMvc.perform(get("/clients"))
+        mockMvc.perform(get("/clients")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
+
 
     // ---------- DELETE /clients/{id} ----------
 
