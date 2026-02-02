@@ -1,5 +1,6 @@
 package com.jonathanleite.clientapi.domain.service;
 
+import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import org.springframework.data.domain.Page;
@@ -11,13 +12,11 @@ public interface ClientService {
 
     ClientResponseDTO update(Long id, ClientRequestDTO request);
 
+    ClientResponseDTO patch(Long id, ClientPatchRequestDTO request);
+
     ClientResponseDTO findById(Long id);
 
-    Page<ClientResponseDTO> findAll(
-            String email,
-            String document,
-            Pageable pageable
-    );
+    Page<ClientResponseDTO> findAll(String email, String document, Pageable pageable);
 
     void delete(Long id);
 }

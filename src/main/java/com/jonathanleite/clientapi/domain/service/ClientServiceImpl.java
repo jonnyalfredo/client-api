@@ -1,5 +1,6 @@
 package com.jonathanleite.clientapi.domain.service;
 
+import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
@@ -113,6 +114,44 @@ public class ClientServiceImpl implements ClientService {
                     throw new BusinessException("Documento já cadastrado");
                 });
     }
+
+    @Override
+    public ClientResponseDTO patch(Long id, ClientPatchRequestDTO request) {
+
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cliente não encontrado"));
+
+        // Validação de duplicidade SOMENTE se o campo vier preenchido
+        if (request.getEmail() != null) {
+            clientRepository.findByEmail(request.getEmail())
+                    .filter(c -> !c.getId().equals(id))
+                    .ifPresent(c -> {
+                        throw new BusinessException("Email já cadastrado");
+                    });
+            client.setEmail(request.getEmail());
+        }
+
+        if (request.getDocument() != null) {
+            clientRepository.findByDocument(request.getDocument())
+                    .filter(c -> !c.getId().equals(id))
+                    .ifPresent(c -> {
+                        throw new BusinessException("Documento já cadastrado");
+                    });
+            client.setDocument(request.getDocument());
+        }
+
+        if (request.getName() != null) {
+            client.setName(request.getName());
+        }
+
+        if (request.getPhone() != null) {
+            client.setPhone(request.getPhone());
+        }
+
+        return toResponseDTO(clientRepository.save(client));
+    }
+
 
     private ClientResponseDTO toResponseDTO(Client client) {
 
