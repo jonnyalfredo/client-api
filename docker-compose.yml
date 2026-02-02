@@ -1,0 +1,27 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: clientapi-postgres
+    environment:
+      POSTGRES_DB: clientdb
+      POSTGRES_USER: clientuser
+      POSTGRES_PASSWORD: clientpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: clientapi-api
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always
+
+volumes:
+  postgres_data:

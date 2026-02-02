@@ -3,7 +3,6 @@ package com.jonathanleite.clientapi.api.controller.service;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
-import com.jonathanleite.clientapi.domain.exception.BusinessException;
 import com.jonathanleite.clientapi.domain.exception.ConflictException;
 import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
@@ -13,11 +12,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,10 +68,8 @@ class ClientServiceImplTest {
 
         when(clientRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        assertThrows(
-                ConflictException.class,
-                () -> clientService.create(request)
-        );
+        assertThrows(ConflictException.class,
+                () -> clientService.create(request));
     }
 
     /* ===============================
@@ -98,17 +101,27 @@ class ClientServiceImplTest {
     }
 
     /* ===============================
-       FIND ALL
+       FIND ALL (FILTROS + PAGINAÇÃO)
        =============================== */
 
     @Test
-    void shouldReturnClientList() {
-        when(clientRepository.findAll())
-                .thenReturn(List.of(new Client(), new Client()));
+    void shouldReturnPagedClientListWithoutFilters() {
+        Pageable pageable = PageRequest.of(0, 10);
 
-        List<ClientResponseDTO> clients = clientService.findAll();
+        Page<Client> page = new PageImpl<>(
+                List.of(new Client(), new Client()),
+                pageable,
+                2
+        );
 
-        assertEquals(2, clients.size());
+        when(clientRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+
+        Page<ClientResponseDTO> result =
+                clientService.findAll(null, null, pageable);
+
+        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getTotalElements());
     }
 
     /* ===============================

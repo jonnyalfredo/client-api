@@ -1,5 +1,6 @@
 package com.jonathanleite.clientapi.api.controller;
 
+import com.jonathanleite.clientapi.api.dto.ClientPatchRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.service.ClientService;
@@ -35,14 +36,29 @@ public class ClientController {
         return ResponseEntity.ok(clientService.update(id, request));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<ClientResponseDTO> patch(
+            @PathVariable Long id,
+            @RequestBody ClientPatchRequestDTO request) {
+
+        return ResponseEntity.ok(clientService.patch(id, request));
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(clientService.findById(id));
     }
 
     @GetMapping
-    public ResponseEntity<Page<ClientResponseDTO>> findAll(Pageable pageable) {
-        return ResponseEntity.ok(clientService.findAll(pageable));
+    public ResponseEntity<Page<ClientResponseDTO>> findAll(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String document,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(
+                clientService.findAll(email, document, pageable)
+        );
     }
 
     @DeleteMapping("/{id}")

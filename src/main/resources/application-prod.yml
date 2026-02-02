@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/clientdb
+    username: clientuser
+    password: clientpass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  sql:
+    init:
+      mode: never
+
+server:
+  port: 8080
