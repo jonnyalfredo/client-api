@@ -2,8 +2,8 @@ package com.jonathanleite.clientapi.domain.service;
 
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ClientService {
 
@@ -13,7 +13,7 @@ public interface ClientService {
 
     ClientResponseDTO findById(Long id);
 
-    List<ClientResponseDTO> findAll();
+    Page<ClientResponseDTO> findAll(Pageable pageable);
 
     void delete(Long id);
 }

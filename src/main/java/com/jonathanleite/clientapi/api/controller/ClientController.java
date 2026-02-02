@@ -5,11 +5,11 @@ import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/clients")
@@ -20,38 +20,33 @@ public class ClientController {
 
     @PostMapping
     public ResponseEntity<ClientResponseDTO> create(
-            @RequestBody @Valid ClientRequestDTO request) {
+            @Valid @RequestBody ClientRequestDTO request) {
 
-        ClientResponseDTO response = clientService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(clientService.create(request));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody @Valid ClientRequestDTO request) {
+            @Valid @RequestBody ClientRequestDTO request) {
 
-        ClientResponseDTO response = clientService.update(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clientService.update(id, request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientResponseDTO> findById(@PathVariable Long id) {
-
-        ClientResponseDTO response = clientService.findById(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(clientService.findById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientResponseDTO>> findAll() {
-
-        List<ClientResponseDTO> response = clientService.findAll();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Page<ClientResponseDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(clientService.findAll(pageable));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-
         clientService.delete(id);
         return ResponseEntity.noContent().build();
     }

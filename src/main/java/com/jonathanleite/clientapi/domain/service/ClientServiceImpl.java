@@ -3,13 +3,14 @@ package com.jonathanleite.clientapi.domain.service;
 import com.jonathanleite.clientapi.api.dto.ClientRequestDTO;
 import com.jonathanleite.clientapi.api.dto.ClientResponseDTO;
 import com.jonathanleite.clientapi.domain.entity.Client;
+import com.jonathanleite.clientapi.domain.exception.BusinessException;
+import com.jonathanleite.clientapi.domain.exception.ConflictException;
+import com.jonathanleite.clientapi.domain.exception.ResourceNotFoundException;
 import com.jonathanleite.clientapi.domain.repository.ClientRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,16 +30,15 @@ public class ClientServiceImpl implements ClientService {
                 .phone(request.getPhone())
                 .build();
 
-        Client savedClient = clientRepository.save(client);
-
-        return toResponseDTO(savedClient);
+        return toResponseDTO(clientRepository.save(client));
     }
 
     @Override
     public ClientResponseDTO update(Long id, ClientRequestDTO request) {
 
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cliente não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cliente não encontrado"));
 
         validateDuplicateClientUpdate(id, request);
 
@@ -47,49 +47,46 @@ public class ClientServiceImpl implements ClientService {
         client.setEmail(request.getEmail());
         client.setPhone(request.getPhone());
 
-        Client updatedClient = clientRepository.save(client);
-
-        return toResponseDTO(updatedClient);
+        return toResponseDTO(clientRepository.save(client));
     }
 
     @Override
     public ClientResponseDTO findById(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cliente não encontrado"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Cliente não encontrado"));
 
         return toResponseDTO(client);
     }
 
     @Override
-    public List<ClientResponseDTO> findAll() {
-        return clientRepository.findAll()
-                .stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<ClientResponseDTO> findAll(Pageable pageable) {
+        return clientRepository.findAll(pageable)
+                .map(this::toResponseDTO);
     }
 
     @Override
     public void delete(Long id) {
 
         if (!clientRepository.existsById(id)) {
-            throw new EntityNotFoundException("Cliente não encontrado");
+            throw new ResourceNotFoundException("Cliente não encontrado");
         }
 
         clientRepository.deleteById(id);
     }
 
     /* ===============================
-       MÉTODOS AUXILIARES
+       VALIDAÇÕES DE NEGÓCIO
        =============================== */
 
     private void validateDuplicateClient(ClientRequestDTO request) {
 
         if (clientRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email já cadastrado");
+            throw new ConflictException("Email já cadastrado");
         }
 
         if (clientRepository.existsByDocument(request.getDocument())) {
-            throw new IllegalArgumentException("Documento já cadastrado");
+            throw new ConflictException("Documento já cadastrado");
         }
     }
 
@@ -98,13 +95,13 @@ public class ClientServiceImpl implements ClientService {
         clientRepository.findByEmail(request.getEmail())
                 .filter(client -> !client.getId().equals(id))
                 .ifPresent(client -> {
-                    throw new IllegalArgumentException("Email já cadastrado");
+                    throw new BusinessException("Email já cadastrado");
                 });
 
         clientRepository.findByDocument(request.getDocument())
                 .filter(client -> !client.getId().equals(id))
                 .ifPresent(client -> {
-                    throw new IllegalArgumentException("Documento já cadastrado");
+                    throw new BusinessException("Documento já cadastrado");
                 });
     }
 
